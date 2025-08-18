@@ -55,18 +55,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,gateway
+        include: health,info,gateway
   endpoint:
     health:
       show-details: always
     gateway:
       enabled: ${ROUTE_TABLES_ENABLED:true}
-    prometheus:
-      enabled: true
     metrics:
-      export:
-        prometheus:
-          enabled: true
+      enabled: false
   info:
     env:
       enabled: true
