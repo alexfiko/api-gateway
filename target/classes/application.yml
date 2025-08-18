@@ -57,9 +57,9 @@ management:
       exposure:
         include: health,info,metrics,prometheus
   metrics:
-    binders:
-      processor:
-        enabled: false
+    enable:
+      system.cpu: false
+      process.cpu: false
   endpoint:
     health:
       show-details: always
