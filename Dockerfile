@@ -4,5 +4,5 @@ RUN mvn clean package
 
 FROM openjdk:21
 EXPOSE 8080
-COPY --from=build /target/api-gateway-1.0.0.jar app.jar
+COPY --from=build /target/api-gateway.jar app.jar
 ENTRYPOINT ["java", "-jar", "/app.jar"]
