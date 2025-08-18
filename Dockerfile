@@ -1,11 +1,8 @@
-FROM openjdk:17-jdk-slim
+FROM maven:3.9.6-eclipse-temurin-21 AS build
+COPY . .
+RUN mvn clean package
 
-WORKDIR /app
-
-COPY target/api-gateway.jar api-gateway.jar
-
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
-
+FROM openjdk:21
 EXPOSE 8080
-
-CMD ["sh", "-c", "java $JAVA_OPTS -jar api-gateway.jar"]
+COPY --from=build /target/api-gateway-1.0.0.jar app.jar
+ENTRYPOINT ["java", "-jar", "/app.jar"]

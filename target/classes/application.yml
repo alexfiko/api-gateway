@@ -1,54 +1,98 @@
 server:
-  port: ${PORT:8762}
-        
-## Classic Eureka configuration
-eureka:
-  instance:
-    preferIpAddress: true
-    hostname: ${HOSTNAME:localhost}
-    
-  client:
-    registerWithEureka: true
-    fetchRegistry: true
-    serviceUrl:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
-      
+  port: ${PORT:8080}
 
-## Enable service discovery (with Eureka)
-## lower-case-service-id is mandatory, otherwise is retrieved in upper case from Eureka
 spring:
   application:
-    name: gateway    
+    name: api-gateway
   cloud:
     gateway:
+      routes:
+        - id: citas-service
+          uri: lb://citas-service
+          predicates:
+            - Path=/digital/hospital/appointments/**
+          filters:
+            - RewritePath=/digital/hospital/appointments/(?<segment>.*), /appointments/${segment}
+
+        - id: doctor-service
+          uri: lb://doctor-service
+          predicates:
+            - Path=/digital/hospital/doctors/**
+          filters:
+            - RewritePath=/digital/hospital/doctors/(?<segment>.*), /doctors/${segment}
+
+        - id: especialidad-service
+          uri: lb://especialidad-service
+          predicates:
+            - Path=/digital/hospital/specialties/**
+          filters:
+            - RewritePath=/digital/hospital/specialties/(?<segment>.*), /specialties/${segment}
+
+        - id: paciente-service
+          uri: lb://paciente-service
+          predicates:
+            - Path=/digital/hospital/patients/**
+          filters:
+            - RewritePath=/digital/hospital/patients/(?<segment>.*), /patients/${segment}
       discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+        enabled: true
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-      globalcors: ## CORS Configuration
+      globalcors:
         cors-configurations:
-          '[/**]': ## For all routes
-            allowedOrigins: ${ALLOWED_ORIGINS:*} # With '*' we allow all origins. We can restrict by indicating domains or ip + port, e.g. http://localhost:3000 (where our front is, or a Vercel domain)
-            allowedHeaders: "*" ## All headers allowed
+          '[/**]':
+            allowedOrigins: ${ALLOWED_ORIGINS:*}
+            allowedHeaders: "*"
             allowedMethods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - PATCH
-      
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
 
-## We enable the Actuator API to be able to access <<host>>/actuator/gateway/routes
-## We expose the routings that have been automatically detected (all)
-## Depending on the ROUTE_TABLES_ENABLED environment variable (true by default)
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka} 
+    registerWithEureka: true
+    fetchRegistry: true
+  instance:
+    hostname: ${HOSTNAME:eureka-server}
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
 management:
-  endpoint:
-    gateway:  
-      enabled: ${ROUTE_TABLES_ENABLED:true}
   endpoints:
     web:
       exposure:
-        include:
-        - '*'
+        include: health,info
+  metrics:
+    enable:
+      system.cpu: false
+      process.cpu: false
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: ${ROUTE_TABLES_ENABLED:true}
+    metrics:
+      enabled: false
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: API Gateway
+    description: Gateway para enrutar servicios vía Eureka
+    version: 1.0.0
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+ 
+ 
+ENABLE_CORS: true
+CORS_ALLOWED_ORIGINS: https://cliente.com,http://localhost:5173 
