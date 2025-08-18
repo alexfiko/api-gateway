@@ -1,0 +1,88 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        - id: citas-service
+          uri: lb://citas-service
+          predicates:
+            - Path=/digital/hospital/appointments/**
+          filters:
+            - RewritePath=/digital/hospital/appointments/(?<segment>.*), /appointments/${segment}
+
+        - id: doctor-service
+          uri: lb://doctor-service
+          predicates:
+            - Path=/digital/hospital/doctors/**
+          filters:
+            - RewritePath=/digital/hospital/doctors/(?<segment>.*), /doctors/${segment}
+
+        - id: especialidad-service
+          uri: lb://especialidad-service
+          predicates:
+            - Path=/digital/hospital/specialties/**
+          filters:
+            - RewritePath=/digital/hospital/specialties/(?<segment>.*), /specialties/${segment}
+
+        - id: paciente-service
+          uri: lb://paciente-service
+          predicates:
+            - Path=/digital/hospital/patients/**
+          filters:
+            - RewritePath=/digital/hospital/patients/(?<segment>.*), /patients/${segment}
+
+    discovery:
+      enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka} 
+    registerWithEureka: true
+    fetchRegistry: true
+  instance:
+    hostname: ${HOSTNAME:eureka-server}
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: ${ROUTE_TABLES_ENABLED:true}
+    prometheus:
+      enabled: true
+    metrics:
+      export:
+        prometheus:
+          enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: API Gateway
+    description: Gateway para enrutar servicios vía Eureka
+    version: 1.0.0
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+ 
+ 
+ENABLE_CORS: true
+CORS_ALLOWED_ORIGINS: https://cliente.com,http://localhost:5173 
