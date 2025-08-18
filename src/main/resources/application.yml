@@ -1,11 +1,9 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
     name: api-gateway
-  main:
-    web-application-type: reactive
   cloud:
     gateway:
       routes:
@@ -36,14 +34,26 @@ spring:
             - Path=/digital/hospital/patients/**
           filters:
             - RewritePath=/digital/hospital/patients/(?<segment>.*), /patients/${segment}
-
-    discovery:
-      enabled: true
+      discovery:
+        enabled: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ${ALLOWED_ORIGINS:*}
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
 
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka} 
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka}
     registerWithEureka: true
     fetchRegistry: true
   instance:
@@ -52,37 +62,17 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
 
 management:
+  endpoint:
+    gateway:
+      enabled: ${ROUTE_TABLES_ENABLED:true}
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
-  metrics:
-    enable:
-      system.cpu: false
-      process.cpu: false
-  endpoint:
-    health:
-      show-details: always
-    gateway:
-      enabled: ${ROUTE_TABLES_ENABLED:true}
-    metrics:
-      enabled: false
-  info:
-    env:
-      enabled: true
-
-info:
-  app:
-    name: API Gateway
-    description: Gateway para enrutar servicios vía Eureka
-    version: 1.0.0
+        include:
+          - '*'
 
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     reactor.netty.http.client: DEBUG
-    org.springframework.cloud.netflix.eureka: DEBUG
- 
- 
-ENABLE_CORS: true
-CORS_ALLOWED_ORIGINS: https://cliente.com,http://localhost:5173 
+    org.springframework.cloud.netflix.eureka: DEBUG 
