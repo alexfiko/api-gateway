@@ -13,7 +13,6 @@ spring:
           max-connections: 200
           max-idle-time: 15s
       routes:
-      routes:
         - id: citas-service
           uri: lb://citas-service
           predicates:
