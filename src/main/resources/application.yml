@@ -4,9 +4,97 @@ server:
 spring:
   application:
     name: api-gateway
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:prod}
+  cloud:
+    gateway:
+      routes:
+        - id: citas-service
+          uri: lb://${CITAS_SERVICE_URL:http://citas-service.railway.internal:8083}
+          predicates:
+            - Path=/digital/hospital/appointments/**
+          filters:
+            - RewritePath=/digital/hospital/appointments/(?<segment>.*), /appointments/${segment}
 
+        - id: doctor-service
+          uri: lb://${DOCTOR_SERVICE_URL:http://doctor-service.railway.internal:8081}
+          predicates:
+            - Path=/digital/hospital/doctors/**
+          filters:
+            - RewritePath=/digital/hospital/doctors/(?<segment>.*), /doctors/${segment}
+
+        - id: especialidad-service
+          uri: lb://${ESPECIALIDAD_SERVICE_URL:http://especialidad-service.railway.internal:8084}
+          predicates:
+            - Path=/digital/hospital/specialties/**
+          filters:
+            - RewritePath=/digital/hospital/specialties/(?<segment>.*), /specialties/${segment}
+
+        - id: paciente-service
+          uri: lb://${PACIENTE_SERVICE_URL:http://paciente-service.railway.internal:8082}
+          predicates:
+            - Path=/digital/hospital/patients/**
+          filters:
+            - RewritePath=/digital/hospital/patients/(?<segment>.*), /patients/${segment}
+      discovery:
+        enabled: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - AddResponseHeader=Access-Control-Allow-Origin,*
+        - AddResponseHeader=Access-Control-Allow-Methods,GET,POST,PUT,DELETE,PATCH,OPTIONS
+        - AddResponseHeader=Access-Control-Allow-Headers,*
+        - AddResponseHeader=Access-Control-Allow-Credentials,true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: 
+              - ${ALLOWED_ORIGINS:*}
+              - "http://localhost:3000"
+              - "http://localhost:5173"
+              - "http://localhost:8080"
+              - "https://cliente.com"
+              - "https://*.vercel.app"
+              - "https://*.netlify.app"
+            allowedHeaders: 
+              - "*"
+              - "Content-Type"
+              - "Authorization"
+              - "X-Requested-With"
+              - "Accept"
+              - "Origin"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowCredentials: true
+            maxAge: 3600
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: ${ROUTE_TABLES_ENABLED:true}
+  metrics:
+    enable:
+      system.cpu: false
+      process.cpu: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka} 
+    registerWithEureka: true
+    fetchRegistry: true
+  instance:
+    hostname: ${HOSTNAME:${spring.application.name}}
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
 
 info:
   app:
@@ -17,5 +105,5 @@ info:
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
-    reactor.netty.http.client: DEBUG
+    reactor.nettx.http.client: DEBUG
     org.springframework.cloud.netflix.eureka: DEBUG
