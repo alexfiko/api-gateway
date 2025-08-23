@@ -42,7 +42,7 @@ spring:
             - RewritePath=/digital/hospital/patients/(?<segment>.*), /patients/${segment}
             
       discovery:
-        enabled: false
+        enabled: true
       globalcors:
         cors-configurations:
           '[/**]':
