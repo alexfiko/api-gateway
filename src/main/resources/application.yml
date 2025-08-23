@@ -14,7 +14,7 @@ spring:
           max-idle-time: 15s
       routes:
         - id: citas-service
-          uri: lb://citas-service
+          uri: ${CITAS_SERVICE_URL:citas-service.railway.internal:8083}
           predicates:
             - Path=/digital/hospital/appointments/**
             - Path=/appointments/**
@@ -22,7 +22,7 @@ spring:
             - RewritePath=/digital/hospital/appointments/(?<segment>.*), /appointments/${segment}
             
         - id: doctor-service
-          uri: lb://doctor-service
+          uri: ${DOCTOR_SERVICE_URL:doctor-service.railway.internal:8081}
           predicates:
             - Path=/digital/hospital/doctors/**
             - Path=/doctors/**
@@ -30,7 +30,7 @@ spring:
             - RewritePath=/digital/hospital/doctors/(?<segment>.*), /doctors/${segment}
 
         - id: especialidad-service
-          uri: lb://especialidad-service
+          uri: ${ESPECIALIDAD_SERVICE_URL:especialidad-service.railway.internal:8084}
           predicates:
             - Path=/digital/hospital/specialties/**
             - Path=/specialties/**
@@ -38,7 +38,7 @@ spring:
             - RewritePath=/digital/hospital/specialties/(?<segment>.*), /specialties/${segment}
 
         - id: paciente-service
-          uri: lb://paciente-service
+          uri: ${PACIENTE_SERVICE_URL:paciente-service.railway.internal:8082}
           predicates:
             - Path=/digital/hospital/patients/**
             - Path=/patients/**
@@ -49,11 +49,6 @@ spring:
         enabled: true
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-        - AddResponseHeader=Access-Control-Allow-Origin,*
-        - AddResponseHeader=Access-Control-Allow-Methods,*
-        - AddResponseHeader=Access-Control-Allow-Headers,*
-        - AddResponseHeader=Access-Control-Allow-Credentials,true
-        - AddResponseHeader=Access-Control-Allow-Max-Age,3600
         
       globalcors:
         cors-configurations:
@@ -61,7 +56,7 @@ spring:
             allowedOrigins: "*"
             allowedHeaders: "*"
             allowedMethods: "*"
-            allowCredentials: false
+            allowCredentials: true
 
 management:
   endpoints:
