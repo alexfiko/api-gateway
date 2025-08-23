@@ -1,56 +1,104 @@
 server:
   port: ${PORT:8080}
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:prod}
-        
-## Classic Eureka configuration
-eureka:
-  instance:
-    preferIpAddress: true
-    hostname: ${HOSTNAME:localhost}
-    
-  client:
-    registerWithEureka: true
-    fetchRegistry: true
-    serviceUrl:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
-      
 
-## Enable service discovery (with Eureka)
-## lower-case-service-id is mandatory, otherwise is retrieved in upper case from Eureka
 spring:
   application:
-    name: api-gateway    
+    name: api-gateway
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 30s
+        pool:
+          max-connections: 200
+          max-idle-time: 15s
+      routes:
+        - id: citas-service
+          uri: lb://citas-service
+          predicates:
+            - Path=/digital/hospital/appointments/**
+            - Path=/appointments/**
+          filters:
+            - RewritePath=/digital/hospital/appointments/(?<segment>.*), /appointments/${segment}
+            
+        - id: doctor-service
+          uri: lb://doctor-service
+          predicates:
+            - Path=/digital/hospital/doctors/**
+            - Path=/doctors/**
+          filters:
+            - RewritePath=/digital/hospital/doctors/(?<segment>.*), /doctors/${segment}
+
+        - id: especialidad-service
+          uri: lb://especialidad-service
+          predicates:
+            - Path=/digital/hospital/specialties/**
+            - Path=/specialties/**
+          filters:
+            - RewritePath=/digital/hospital/specialties/(?<segment>.*), /specialties/${segment}
+
+        - id: paciente-service
+          uri: lb://paciente-service
+          predicates:
+            - Path=/digital/hospital/patients/**
+            - Path=/patients/**
+          filters:
+            - RewritePath=/digital/hospital/patients/(?<segment>.*), /patients/${segment}
+            
       discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+        enabled: true
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-      globalcors: ## CORS Configuration
+        - AddResponseHeader=Access-Control-Allow-Origin,*
+        - AddResponseHeader=Access-Control-Allow-Methods,*
+        - AddResponseHeader=Access-Control-Allow-Headers,*
+        - AddResponseHeader=Access-Control-Allow-Credentials,true
+        - AddResponseHeader=Access-Control-Allow-Max-Age,3600
+        
+      globalcors:
         cors-configurations:
-          '[/**]': ## For all routes
-            allowedOrigins: ${ALLOWED_ORIGINS:*} # With '*' we allow all origins. We can restrict by indicating domains or ip + port, e.g. http://localhost:3000 (where our front is, or a Vercel domain)
-            allowedHeaders: "*" ## All headers allowed
-            allowedMethods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - PATCH
-      
+          '[/**]':
+            allowedOrigins: "*"
+            allowedHeaders: "*"
+            allowedMethods: "*"
+            allowCredentials: false
 
-## We enable the Actuator API to be able to access <<host>>/actuator/gateway/routes
-## We expose the routings that have been automatically detected (all)
-## Depending on the ROUTE_TABLES_ENABLED environment variable (true by default)
 management:
-  endpoint:
-    gateway:  
-      enabled: ${ROUTE_TABLES_ENABLED:true}
   endpoints:
     web:
       exposure:
-        include:
-        - '*'
+        include: health,info,gateway,metrics
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: ${ROUTE_TABLES_ENABLED:true}
+  metrics:
+    enable:
+      system.cpu: false
+      process.cpu: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka} 
+    registerWithEureka: true
+    fetchRegistry: true
+  instance:
+    hostname: ${HOSTNAME:${spring.application.name}}
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+info:
+  app:
+    name: API Gateway
+    description: Gateway para enrutar servicios vía Eureka
+    version: 1.0.0
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
+    reactor.netty.http.server: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+    org.springframework.web: DEBUG
