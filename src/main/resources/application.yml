@@ -7,7 +7,7 @@ spring:
   cloud:
     gateway:
       httpclient:
-        connect-timeout: 5000
+        connect-timeout: 10000
         response-timeout: 30s
         pool:
           max-connections: 200
@@ -17,7 +17,6 @@ spring:
           uri: ${CITAS_SERVICE_URL:citas-service.railway.internal:8083}
           predicates:
             - Path=/digital/hospital/appointments/**
-            - Path=/appointments/**
           filters:
             - RewritePath=/digital/hospital/appointments/(?<segment>.*), /appointments/${segment}
             
@@ -25,7 +24,6 @@ spring:
           uri: ${DOCTOR_SERVICE_URL:doctor-service.railway.internal:8081}
           predicates:
             - Path=/digital/hospital/doctors/**
-            - Path=/doctors/**
           filters:
             - RewritePath=/digital/hospital/doctors/(?<segment>.*), /doctors/${segment}
 
@@ -33,7 +31,6 @@ spring:
           uri: ${ESPECIALIDAD_SERVICE_URL:especialidad-service.railway.internal:8084}
           predicates:
             - Path=/digital/hospital/specialties/**
-            - Path=/specialties/**
           filters:
             - RewritePath=/digital/hospital/specialties/(?<segment>.*), /specialties/${segment}
 
@@ -41,7 +38,6 @@ spring:
           uri: ${PACIENTE_SERVICE_URL:paciente-service.railway.internal:8082}
           predicates:
             - Path=/digital/hospital/patients/**
-            - Path=/patients/**
           filters:
             - RewritePath=/digital/hospital/patients/(?<segment>.*), /patients/${segment}
             
