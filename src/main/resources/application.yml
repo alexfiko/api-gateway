@@ -70,7 +70,7 @@ management:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka} 
+      defaultZone: ${EUREKA_URL:http://spring-cloud-eureka:8761/eureka} 
     registerWithEureka: true
     fetchRegistry: true
   instance:
